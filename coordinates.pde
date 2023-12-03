@@ -1,4 +1,3 @@
-
 import controlP5.*;
 
 
@@ -8,7 +7,8 @@ Slider alphaCornerS, cornerArrowS, lenLineArrowS, lenArrowS;
 Toggle gridShow;
 
 
-int widthSidebar = 200; boolean sidebar = false;
+int widthSidebar = 200, widthOfLine = 6;
+boolean sidebar = false, resizeSidebar = false;
 
 int posPressX, posPressY;
 int deltaX, deltaY;
@@ -33,7 +33,7 @@ void setup() {
     .setPosition(width-widthSidebar+(widthSidebar-120)/2, 35)
     .setLabel("")
     .setSize(120, 120)
-    .setMinMax(-25, -25, 25, 25)
+    .setMinMax(-25, 25, 25, -25)
     .setValue(3, 2)
     .setColorBackground(color(255))
     .setColorForeground(color(140))
@@ -148,6 +148,7 @@ void draw() {
   line(convertCordX(posPointX) + (cos(radians(alpha+90)) * scale * lenArrow), convertCordY(posPointY) - (sin(radians(alpha+90)) * scale * lenArrow),
   *///    convertCordX(posPointX) + (cos(radians(alpha+90)) * (scale * lenArrow - lenLineArrow * cos(radians(cornerArrow/2)))) + cos(radians(180-alpha)) * sin(radians(cornerArrow/2)) * lenLineArrow,
    //   convertCordY(posPointY) - (sin(radians(alpha+90)) * (scale * lenArrow - lenLineArrow * cos(radians(cornerArrow/2)))) + sin(radians(180-alpha)) * sin(radians(cornerArrow/2)) * lenLineArrow);
+  //bottom arrow
   line(convertCordX(posPointX) + (cos(radians(alpha-90)) * scale * lenArrow), convertCordY(posPointY) - (sin(radians(alpha-90)) * scale * lenArrow),
       convertCordX(posPointX) + (cos(radians(alpha-90)) * (scale * lenArrow - lenLineArrow * scale * cos(radians(cornerArrow/2)))) - cos(radians(-alpha)) * sin(radians(cornerArrow/2)) * lenLineArrow * scale,
       convertCordY(posPointY) - (sin(radians(alpha-90)) * (scale * lenArrow - lenLineArrow * scale * cos(radians(cornerArrow/2)))) - sin(radians(-alpha)) * sin(radians(cornerArrow/2)) * lenLineArrow * scale);
@@ -167,23 +168,23 @@ void draw() {
   fill(140);
   noStroke();
   if (sidebar) {
-    rect(width-widthSidebar, 0, width, height);
+    rect(width-widthSidebar+((resizeSidebar)?deltaX:0), 0, widthSidebar-((resizeSidebar)?deltaX:0), height);
     fill(30);
-    rect(width-widthSidebar-2, 0, 4, height);
-    rect(width-widthSidebar-15, 45, 15, 45, 20, 0, 0, 20);
+    rect(width-widthSidebar+((resizeSidebar)?deltaX:0)-widthOfLine/2, 0, widthOfLine, height);
+    rect(width-widthSidebar+((resizeSidebar)?deltaX:0)-15, 45, 15, 45, 20, 0, 0, 20);
     fill(255);
     textSize(20);
-    text("-", width-widthSidebar-12, 72);
+    text("-", width-widthSidebar+((resizeSidebar)?deltaX:0)-12, 72);
   } else {
     fill(30);
-    rect(width-4, 0, 4, height);
+    rect(width-widthOfLine/2, 0, widthOfLine/2, height);
     rect(width-13, 45, 15, 45, 20, 0, 0, 20);
     fill(255);
     textSize(20);
     text("+", width-11, 72);
   }
   posPointX = (int)locCordPlaceS2D.getArrayValue()[0];
-  posPointY = -(int)locCordPlaceS2D.getArrayValue()[1];
+  posPointY = (int)locCordPlaceS2D.getArrayValue()[1];
   posPointLocalX = (int)pointLocCordS2D.getArrayValue()[0];
   posPointLocalY = (int)pointLocCordS2D.getArrayValue()[1];
 }
@@ -222,7 +223,7 @@ void mousePressed() {
   deltaX = 0; deltaY = 0;
   oldCenterPointX = centerPointX;
   oldCenterPointY = centerPointY;
-  if (sidebar && mouseX > width-widthSidebar-15 && mouseX < width-widthSidebar && mouseY > 45 && mouseY < 90) {
+  if (sidebar && mouseX > width-widthSidebar-15-widthOfLine/2 && mouseX < width-widthSidebar-widthOfLine/2 && mouseY > 45 && mouseY < 90) {
     sidebar = false;
     locCordPlaceS2D.hide();
     pointLocCordS2D.hide();
@@ -231,7 +232,8 @@ void mousePressed() {
     cornerArrowS.hide();
     lenLineArrowS.hide();
     lenArrowS.hide();
-  } else if (!sidebar && mouseX > width-15 && mouseX < width && mouseY > 45 && mouseY < 90) {
+  }
+  if (!sidebar && mouseX > width-15 && mouseX < width && mouseY > 45 && mouseY < 90) {
     sidebar = true;
     locCordPlaceS2D.show();
     pointLocCordS2D.show();
@@ -243,17 +245,57 @@ void mousePressed() {
   }
 }
 
+void mouseReleased() {
+  if (resizeSidebar) {
+    resizeSidebar = false;
+    widthSidebar -= deltaX;
+    if (widthSidebar > width) widthSidebar = width - 100;
+    if (widthSidebar < 150) widthSidebar = 150;
+    locCordPlaceS2D.setPosition(width-widthSidebar+(widthSidebar-120)/2, 35).show();
+    alphaCornerS.setPosition(width-widthSidebar+(widthSidebar-120)/2, 185).show();
+    pointLocCordS2D.setPosition(width-widthSidebar+(widthSidebar-120)/2, 245).show();
+    cornerArrowS.setPosition(width-widthSidebar+(widthSidebar-120)/2, 405).show();
+    lenLineArrowS.setPosition(width-widthSidebar+(widthSidebar-120)/2, 440).show();
+    lenArrowS.setPosition(width-widthSidebar+(widthSidebar-120)/2, 475).show();
+    gridShow.setPosition(width-widthSidebar+(widthSidebar-120)/2, 535).show();
+  }
+}
+
 void mouseDragged() {
-  if ((posPressX < width - widthSidebar && sidebar) || !sidebar) {
+  if ((posPressX < width - widthSidebar - widthOfLine/2 && sidebar) || !sidebar) {
+    if (keyPressed && key == CODED && keyCode == CONTROL) {
+      posPointX = ceil((mouseX-centerPointX)/scale);
+      posPointY = -ceil((mouseY-centerPointY)/scale);
+      locCordPlaceS2D.setValue(posPointX, posPointY);
+    } else {
+      deltaX = mouseX - posPressX;
+      deltaY = mouseY - posPressY;
+      centerPointX = oldCenterPointX + deltaX;
+      centerPointY = oldCenterPointY + deltaY;
+    }
+  } else if (posPressX > width - widthSidebar - widthOfLine/2 && posPressX < width - widthSidebar + widthOfLine/2 && sidebar) {
     deltaX = mouseX - posPressX;
-    deltaY = mouseY - posPressY;
-    centerPointX = oldCenterPointX + deltaX;
-    centerPointY = oldCenterPointY + deltaY;
+    resizeSidebar = true;
+    locCordPlaceS2D.hide();
+    pointLocCordS2D.hide();
+    alphaCornerS.hide();
+    gridShow.hide();
+    cornerArrowS.hide();
+    lenLineArrowS.hide();
+    lenArrowS.hide();
+  }
+}
+
+void mouseMoved() {
+  if (mouseX > width - widthSidebar - widthOfLine/2 && posPressX < width - widthSidebar + widthOfLine/2 && sidebar) {
+    cursor(MOVE);
+  } else {
+    cursor(ARROW);
   }
 }
 
 void mouseWheel(MouseEvent event) {
-  if ((mouseX < width - widthSidebar && sidebar) || !sidebar) {
+  if ((mouseX < width - widthSidebar - widthOfLine/2 && sidebar) || !sidebar) {
     float e = event.getCount();
     scale += scale * (-e)/10;
     if (scale < minScale) scale = minScale;
